@@ -1,0 +1,677 @@
+syntax = "proto3";
+
+package ibis.kingfisher;
+
+option go_package = "kingfisher";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+option java_package = "com.comcast.ibis.kingfisher";
+option java_multiple_files = true;
+
+service Kingfisher {
+
+    rpc GetDevices(GetDevicesRequest) returns (GetDevicesResponse) {
+        option (google.api.http) = {
+            get: "/orgs/{org}/devices"
+        };
+    }
+
+    rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse) {
+        option (google.api.http) = {
+            get: "/orgs/{org}/devices/{device_id}"
+        };
+    }
+    rpc QueryDevices(QueryDevicesRequest) returns (QueryDevicesResponse) {
+        option (google.api.http) = {
+            get: "/orgs/{org}/devices/query"
+        };
+    }
+    rpc OnboardDevice(OnboardDeviceRequest) returns (OnboardDeviceResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}"
+            body: "*"
+        };
+    }
+    rpc PairDevice(PairDeviceRequest) returns (PairDeviceResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices"
+            body: "*"
+        };
+    }
+    rpc CheckPairing(CheckPairingRequest) returns (CheckPairingResponse){
+        option (google.api.http) = {
+            get: "/orgs/{org}/pairing/{code}"
+        };
+    }
+    rpc RemoveDevice(RemoveDeviceRequest) returns (RemoveDeviceResponse) {
+        option (google.api.http) = {
+            delete: "/orgs/{org}/devices/{device_id}"
+        };
+    }
+    rpc UpdateLabels(UpdateLabelsRequest) returns (UpdateLabelsResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/labels"
+            body: "*"
+        };
+    }
+    rpc RemoveLabels(RemoveLabelsRequest) returns (RemoveLabelsResponse) {
+        option (google.api.http) = {
+            patch: "/orgs/{org}/devices/{device_id}/labels"
+            body: "*"
+        };
+    }
+    rpc UpdateRackData(UpdateRackDataRequest) returns (UpdateRackDataResponse) {
+        option (google.api.http) = {
+            put: "/orgs/{org}/devices/{device_id}/rackdata"
+            body: "*"
+        };
+    }
+    rpc ShareDevice(ShareDeviceRequest) returns (ShareDeviceResponse) {
+        option (google.api.http) = {
+            put: "/orgs/{org}/devices/{device_id}/share"
+        };
+    }
+    rpc LockDevice(LockDeviceRequest) returns (LockDeviceResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/lock"
+            body: "*"
+        };
+    }
+    rpc UnlockDevice(UnlockDeviceRequest) returns (UnlockDeviceResponse) {
+        option (google.api.http) = {
+            patch: "/orgs/{org}/devices/{device_id}/lock"
+            body: "*"
+        };
+    }
+    rpc BeaconUnlockDevice(BeaconUnlockDeviceRequest) returns (BeaconUnlockDeviceResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/unlock"
+            body: "*"
+        };
+    }
+
+    // interaction (xapi, screenshot, cloudcookies, logs, etc...)
+
+    // device
+    rpc CheckAlive(CheckAliveRequest) returns (CheckAliveResponse) {
+        option (google.api.http) = {
+            get: "/orgs/{org}/devices/{device_id}/alive"
+        };
+    }
+    rpc Deeplink(DeeplinkRequest) returns (DeeplinkResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/deeplink"
+            body: "*"
+        };
+    }
+    rpc LaunchApp(LaunchAppRequest) returns (LaunchAppResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/launchapp"
+            body: "*"
+        };
+    }
+    rpc PressKey(PressKeyRequest) returns (PressKeyResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/key"
+            body: "*"
+        };
+    }
+    rpc Reboot(RebootRequest) returns (RebootResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/reboot"
+            body: "*"
+        };
+    }
+    rpc Screenshot(ScreenshotRequest) returns (ScreenshotResponse) {
+        // option (google.api.http) = {
+        //     get: "/orgs/{org}/devices/{device_id}/screenshot"
+        // };
+    }
+    // cookies
+    rpc QueryCloudCookies(QueryCloudCookiesRequest) returns (QueryCloudCookiesResponse) {
+        option (google.api.http) = {
+            get: "/orgs/{org}/devices/{device_id}/cloudcookies"
+        };
+    }
+    rpc DeleteCloudCookies(DeleteCloudCookiesRequest) returns (DeleteCloudCookiesResponse) {
+        option (google.api.http) = {
+            patch: "/orgs/{org}/devices/{device_id}/cloudcookies"
+            body: "*"
+        };
+    }
+}
+
+// shared
+
+message Error {
+    int32 code = 1;
+    string message = 2;
+    int32 status = 3;
+    repeated google.protobuf.Any data = 4;
+}
+
+// meta for hyperdrive
+
+message DeviceReference {
+    string org = 1;
+    string device = 2;
+}
+
+message DeviceMetadata {
+    string name = 1;
+    map<string, string> labels = 2;
+    DeviceReservation reservation = 3;
+    OwnerReference owner = 4;
+
+    repeated DeviceFeature features = 5;
+}
+
+message OwnerReference {
+    oneof type {
+        UserReference user = 1;
+    }
+}
+
+message DeviceFeature {
+    string name = 1;
+    bool enabled = 2;
+    bool effective_immediate = 3;
+    map<string, string> config = 4;
+}
+
+message UserReference {
+    string org = 1;
+    string user = 2;
+}
+
+message DeviceReservation {
+    UserReference user = 1;
+    google.protobuf.Timestamp expires = 2;
+    string reservation_secret = 3;
+}
+
+message Device {
+    string device_id = 1;
+    string device_type = 2;
+    string device_model = 3;
+    string ecm_mac = 4;
+    string estb_mac = 5;
+    string status = 6;
+    string billing_status = 7;
+    string serial_number = 8;
+    string receiver_id = 9;
+    string friendly_name = 10;
+    google.protobuf.Timestamp added_date = 11;
+    google.protobuf.Timestamp updated_date = 12;
+    string moca_mac = 13;
+    string service_account_id = 14;
+    string wifi_mac = 15;
+    string ethernet_mac = 16;
+    string estb_ip = 17;
+
+    map<string, string> other_properties = 1001;
+}
+
+message RackData {
+    string ir_blaster_type = 1;
+    string ir_service_port = 2;
+    string ir_service_url = 3;
+    string rack_name = 4;
+    string slot_name = 5;
+    string trace_service_url = 6;
+    string video_camera = 7;
+    string video_source_url = 8;
+    string device_make = 9;
+}
+
+// meta
+message DeviceData {
+    DeviceReference reference = 1;
+    DeviceMetadata metadata = 2;
+    Device device = 3;
+    RackData rackdata = 4;
+}
+
+message EasyPairOutput {
+    string pairing_code = 1;
+    google.protobuf.Timestamp expiration = 2;
+}
+
+message PairingCodeStatus{
+    string org = 1;
+    string code = 2;
+    string status = 3;
+    DeviceReference reference = 4;
+    int64 expiration = 5;
+}
+
+// API messages
+
+message ErrorResponse {
+    Error error = 1;
+}
+
+message GetOrgsRequest{}
+
+message GetOrgsResponse {
+    repeated string result = 1;
+    Error error = 2;
+}
+
+message GetDevicesRequest {
+    string org = 1;
+    bool verbose = 2;
+    bool include_rack_data = 3;
+}
+
+message GetDevicesResponse {
+    repeated DeviceData result = 1;
+    Error error = 2;
+}
+
+message GetDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+    bool include_rack_data = 3;
+}
+
+message GetDeviceResponse {
+    DeviceData result = 1;
+    Error error = 2;
+}
+
+message QueryDevicesRequest {
+    string org = 1;
+    bool verbose = 2;
+    bool include_rack_data = 3;
+    string query = 4;
+    map<string, string> filter = 5;
+}
+
+message QueryDevicesResponse {
+    repeated DeviceData result = 1;
+    Error error = 2;
+}
+
+message OnboardDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+    map<string, string> labels = 3;
+    bool private = 4;
+}
+
+message OnboardDeviceResponse {
+    DeviceData result = 1;
+    Error error = 2;
+}
+
+message PairDeviceRequest {
+    string org = 1;
+    map<string, string> labels = 2;
+    bool private = 3;
+}
+
+message PairDeviceResponse {
+    EasyPairOutput result = 1; // TODO unwrapped in http
+    Error error = 2;
+}
+
+message CheckPairingRequest {
+    string org = 1;
+    string code = 2;
+}
+
+message CheckPairingResponse {
+    PairingCodeStatus result = 1;
+    Error error = 2;
+}
+
+message RemoveDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+}
+
+message RemoveDeviceResponse {
+    Error error = 1;
+}
+
+message UpdateLabelsRequest {
+    string org = 1;
+    string device_id = 2;
+    map<string, string> labels = 3;
+}
+
+message UpdateLabelsResponse {
+    DeviceMetadata result = 1; // public reservation
+    Error error = 2;
+}
+
+message RemoveLabelsRequest {
+    string org = 1;
+    string device_id = 2;
+    repeated string labels = 3;
+}
+
+message RemoveLabelsResponse {
+    DeviceMetadata result = 1; // public reservation
+    Error error = 2;
+}
+
+message UpdateRackDataRequest {
+    string org = 1;
+    string device_id = 2;
+    string ir_blaster_type = 3;
+    string ir_service_port = 4;
+    string ir_service_url = 5;
+    string rack_name = 6;
+    string slot_name = 7;
+    string trace_service_url = 8;
+    string video_camera = 9;
+    string video_source_url = 10;
+    string device_make = 11;
+}
+
+message UpdateRackDataResponse {
+    RackData result = 1;
+    Error error = 2;
+}
+
+message ShareDeviceRequest{
+    string org = 1;
+    string device_id = 2;
+}
+
+message ShareDeviceResponse {
+    Error error = 1;
+}
+message LockDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+    int32  duration_seconds = 3;
+    string reservation_secret = 4;
+}
+
+message LockDeviceResponse {
+    DeviceMetadata result = 1;
+    Error error = 2;
+}
+
+message UnlockDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+    string reservation_secret = 3;
+}
+
+message UnlockDeviceResponse {
+    DeviceMetadata result = 1;
+    Error error = 2;
+}
+
+message BeaconRequest {
+    string reservation_secret = 1;
+}
+
+message BeaconUnlockDeviceRequest {
+    string org = 1;
+    string device_id = 2;
+    string authorization =3;
+    BeaconRequest request = 4;
+}
+
+message BeaconUnlockDeviceResponse {
+    DeviceMetadata result = 1; // public reservation
+    Error error = 2;
+}
+
+// interaction
+// data models
+
+message LaunchAppOutput {
+    string deeplink = 1;
+    string app_url = 2;
+}
+
+message DeeplinkOutput {
+    string deeplink = 1;
+}
+
+message AliveStatus {
+    bool live = 1;
+    bool locked = 2;
+    UserReference locked_by = 3;
+}
+
+message ScreenshotOutput {
+    bytes image = 1;
+}
+
+message CookieProfile {
+    string app = 1;
+    string mode = 2;
+    int32 size = 3;
+}
+
+message CookieProfiles {
+    repeated CookieProfile cookies = 1;
+}
+
+message CookiesDeleted {
+    int32 numCookieJarsCleared = 1;
+}
+
+message AppConfig {
+    string app_name = 1;
+    bool mute_player = 2;
+    bool forward_player_keys = 3;
+    PlayerDimensions player_config = 4;
+    int32 page_timeout = 5;
+    string cookie_mode = 6;
+    string app_cookie_key = 7;
+    ExitParamsConfig exit_params = 8;
+    QuickLaunchTemplateConfig splash_screen = 9;
+    string url = 10;
+    UrlComponents url_components = 12;
+    string controller_type = 13;
+    bool use_background = 14;
+    bool load_money_badger = 16;
+    bool enable_haxee = 17;
+    bool use_web_filter = 18;
+    string template_data = 19;
+    string ua_template = 20;
+    bool enable_cloud_cookie = 21;
+    string mime_type = 22;
+    XscdConfig xscd = 23;
+    map<string, string> headers = 24;
+    map<string, string> template_data_request_headers = 25;
+    bool enable_console_logging = 26;
+    string account_link_partner_id = 27;
+    bool use_app_specific_token = 28;
+    string template_data_content_url = 29;
+    bool set_box_shadow = 30;
+    bool local_storage_enabled = 31;
+    repeated string mock_emails = 32;
+    bool use_mock_emails = 33;
+    string thor_token_mode = 34;
+    bool non_composited_web_g_l_enabled = 35;
+    int64 cloud_cookies_throttling_interval = 36;
+    string cookie_x1_app_id = 37;
+    string cookie_accept_policy = 38;
+    string site_id = 39;
+    string proxy = 40;
+}
+
+message LaunchConfig {
+    string app_name = 1;
+    bool mute_player = 2;
+    bool forward_player_keys = 3;
+    PlayerDimensions player_config = 4;
+    int32 page_timeout = 5;
+    ExitParamsConfig exit_params = 6;
+    QuickLaunchTemplateConfig splash_screen = 7;
+    string device_hash = 8;
+    repeated string mock_emails = 9;
+    bool use_mock_emails = 10;
+    string thor_token_mode = 11;
+    CloudCookiesConfig cookies_config = 12;
+    string account_link_partner_id = 13;
+}
+
+message CloudCookiesConfig {
+    string cookie_mode = 1;
+    string app_cookie_key = 2;
+    map<string, string> metadata = 3;
+    int64 throttling_interval = 4;
+}
+
+message UrlComponents {
+    string protocol = 1;
+    string host = 2;
+    int32 port = 3;
+    string path = 4;
+    map<string, string> query = 5;
+    string fragment = 6;
+}
+
+message XscdConfig {
+    int32 duration_seconds = 1;
+}
+
+message PlayerDimensions {
+    int32 x = 1;
+    int32 y = 2;
+    int32 width = 3;
+    int32 height = 4;
+}
+
+message ExitParamsConfig {
+    string url = 1;
+    map<string, string> headers = 2;
+    string controller_type = 3;
+    string mime_type = 4;
+    string launch_once_id = 5;
+    string deeplink = 6;
+    bool enable_prompt = 7;
+}
+
+message QuickLaunchTemplateConfig {
+    string background_image_url = 1;
+    int32 transition_time_in_ms = 2;
+    bool enable_rotation = 3;
+    int32 rotation_start_index = 4;
+    repeated QuickLaunchTemplatePageConfig pages = 5;
+    string content_url = 6;
+    bool enabled_in_app = 7;
+    int32 minimum_visible_time_in_ms = 8;
+    int32 maximum_visible_time_in_ms = 9;
+}
+
+message QuickLaunchTemplatePageConfig {
+    string template_id = 1;
+    string image_url = 2;
+    string text = 3;
+    string header = 4;
+    int32 transition_time_in_ms = 5;
+    bool wait_for_key = 6;
+}
+
+// interaction
+// API messages
+
+message CheckAliveRequest {
+    string org = 1;
+    string device_id = 2;
+}
+
+message CheckAliveResponse {
+    AliveStatus result = 1;
+    Error error = 2;
+}
+
+message DeeplinkRequest {
+    string org = 1;
+    string device_id = 2;
+    string deeplink = 3;
+    string reservation_secret = 4;
+}
+
+message DeeplinkResponse{
+    DeeplinkOutput result = 1;
+    Error error = 2;
+}
+
+message LaunchAppRequest {
+    string org = 1;
+    string device_id = 2;
+    string reservation_secret = 4;
+    bool enable_debug_mode = 5;
+    map<string, string> additional_params = 6;
+    map<string,string> additional_params_json = 7;
+    bool disable_voice_out = 8;
+    string voice_guidance_mode = 9;
+    bool not_stackable = 10;
+    bool dry_run = 11;
+    AppConfig app_config = 12;
+    bool enable_screensaver = 13;
+}
+
+message LaunchAppResponse {
+    LaunchAppOutput result = 1;
+    Error error = 2;
+}
+
+message PressKeyRequest {
+    string org = 1;
+    string device_id = 2;
+    string key = 3;
+    string reservation_secret = 4;
+}
+
+message PressKeyResponse {
+    Error error = 1;
+}
+
+message RebootRequest {
+    string org = 1;
+    string device_id = 2;
+    string reservation_secret = 3;
+}
+
+message RebootResponse {
+    Error error = 1;
+}
+
+message ScreenshotRequest {
+    string org = 1;
+    string device_id = 2;
+}
+
+message ScreenshotResponse {
+    ScreenshotOutput result = 1;
+    Error error = 2;
+}
+
+message QueryCloudCookiesRequest {
+    string org = 1;
+    string device_id = 2;
+}
+
+message QueryCloudCookiesResponse {
+    CookieProfiles result = 1;
+    Error error = 2;
+}
+
+message DeleteCloudCookiesRequest {
+    string org = 1;
+    string device_id = 2;
+    string app = 3;
+    bool fetch_all = 4;
+    bool hard_clear = 5;
+}
+
+message DeleteCloudCookiesResponse {
+    CookiesDeleted result = 1;
+    Error error = 2;
+}
