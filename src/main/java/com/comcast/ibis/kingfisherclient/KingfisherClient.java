@@ -133,6 +133,8 @@ public class KingfisherClient {
 
         GetDevicesRequest req = GetDevicesRequest.newBuilder()
                 .setOrg(org)
+                .setIncludeRackData(true)
+                .setVerbose(true)
                 .build();
         GetDevicesResponse res = stub.getDevices(req);
         List<DeviceData> result = res.getResultList();
