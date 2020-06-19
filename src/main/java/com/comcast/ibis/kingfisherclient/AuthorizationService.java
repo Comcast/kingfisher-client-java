@@ -44,7 +44,7 @@ public class AuthorizationService {
      * @return the current user org
      * @throws IOException the io exception
      */
-    public String getCurrentUserOrg() throws  IOException{
+    public CurrentUser getCurrentUser() throws  IOException{
 
         HttpGet request = new HttpGet(Constants.AUTHORITY_SERVICE + "/users/current");
         request.addHeader("Authorization", "apikey " + apiKey);
@@ -63,7 +63,7 @@ public class AuthorizationService {
         }
 
         CurrentUser user = this.mapper.readValue(jsonNode.get("result").toString(), CurrentUser.class);
-        return user.getOrg();
+        return user;
     }
 
     /**

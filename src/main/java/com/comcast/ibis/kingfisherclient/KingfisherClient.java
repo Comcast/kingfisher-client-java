@@ -17,12 +17,7 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,7 +30,7 @@ import java.util.stream.Collectors;
  * The type Kingfisher client.
  */
 public class KingfisherClient {
-    private static final int REFRESH_THRESHOLD_MINUTES = 2;
+    private static final int REFRESH_THRESHOLD_SECONDS = 30;
     private static final String AUTH_METADATA = "authorization";
 
     private String token;
@@ -57,11 +52,6 @@ public class KingfisherClient {
     private Thread thread;
 
 
-    /**
-     * Instantiates a new Kingfisher client.
-     *
-     * @param builder the builder
-     */
     private KingfisherClient(KingfisherClientBuilder builder) {
         this.token = builder.token;
         this.tokenType = builder.tokenType;
@@ -78,7 +68,7 @@ public class KingfisherClient {
      * @throws IOException the io exception
      */
     void authorizeCurrentUser() throws IOException {
-        this.org = auth.getCurrentUserOrg();
+        this.org = auth.getCurrentUser().getOrg();
     }
 
     /**
@@ -142,6 +132,24 @@ public class KingfisherClient {
     }
 
     /**
+     * Private devices list.
+     *
+     * @return the list
+     * @throws IOException the io exception
+     */
+    public List<DeviceData> privateDevices() throws IOException {
+        String currentUser = auth.getCurrentUser().getId();
+        List<DeviceData> result = new ArrayList();
+
+        getDevices().forEach(d -> {
+            if(d.getMetadata().getOwner().getUser().getUser().equals(currentUser)) {
+                result.add(d);
+            }
+        });
+        return result;
+    }
+
+    /**
      * Search devices list.
      *
      * @param predicate the predicate
@@ -187,9 +195,6 @@ public class KingfisherClient {
         });
     }
 
-    /**
-     * Refresh devices.
-     */
     private void refreshDevices() {
         Runnable runnable = () -> {
             while (!released.get()) {
@@ -205,7 +210,7 @@ public class KingfisherClient {
                 }
 
                 try {
-                    Thread.sleep(TimeUnit.MINUTES.toMillis(REFRESH_THRESHOLD_MINUTES));
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(REFRESH_THRESHOLD_SECONDS));
                 } catch (InterruptedException e) { }
 
             }

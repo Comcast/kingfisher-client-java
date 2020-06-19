@@ -12,6 +12,12 @@ option java_package = "com.comcast.ibis.kingfisher";
 option java_multiple_files = true;
 
 service Kingfisher {
+    rpc GetOrgs(GetOrgsRequest) returns (GetOrgsResponse) {
+        option deprecated = true;
+        option (google.api.http) = {
+            get: "/orgs"
+        };
+    }
 
     rpc GetDevices(GetDevicesRequest) returns (GetDevicesResponse) {
         option (google.api.http) = {
@@ -24,68 +30,82 @@ service Kingfisher {
             get: "/orgs/{org}/devices/{device_id}"
         };
     }
+
     rpc QueryDevices(QueryDevicesRequest) returns (QueryDevicesResponse) {
         option (google.api.http) = {
             get: "/orgs/{org}/devices/query"
         };
     }
+
     rpc OnboardDevice(OnboardDeviceRequest) returns (OnboardDeviceResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}"
             body: "*"
         };
     }
+
     rpc PairDevice(PairDeviceRequest) returns (PairDeviceResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices"
             body: "*"
         };
     }
+
     rpc CheckPairing(CheckPairingRequest) returns (CheckPairingResponse){
         option (google.api.http) = {
             get: "/orgs/{org}/pairing/{code}"
         };
     }
+
     rpc RemoveDevice(RemoveDeviceRequest) returns (RemoveDeviceResponse) {
         option (google.api.http) = {
             delete: "/orgs/{org}/devices/{device_id}"
         };
     }
+
     rpc UpdateLabels(UpdateLabelsRequest) returns (UpdateLabelsResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/labels"
             body: "*"
         };
     }
+
     rpc RemoveLabels(RemoveLabelsRequest) returns (RemoveLabelsResponse) {
         option (google.api.http) = {
             patch: "/orgs/{org}/devices/{device_id}/labels"
             body: "*"
         };
     }
+
     rpc UpdateRackData(UpdateRackDataRequest) returns (UpdateRackDataResponse) {
+        option deprecated = true;
         option (google.api.http) = {
             put: "/orgs/{org}/devices/{device_id}/rackdata"
             body: "*"
         };
     }
+
     rpc ShareDevice(ShareDeviceRequest) returns (ShareDeviceResponse) {
+        option deprecated = true;
         option (google.api.http) = {
             put: "/orgs/{org}/devices/{device_id}/share"
         };
     }
+
     rpc LockDevice(LockDeviceRequest) returns (LockDeviceResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/lock"
             body: "*"
         };
     }
+
     rpc UnlockDevice(UnlockDeviceRequest) returns (UnlockDeviceResponse) {
         option (google.api.http) = {
             patch: "/orgs/{org}/devices/{device_id}/lock"
             body: "*"
         };
     }
+
     rpc BeaconUnlockDevice(BeaconUnlockDeviceRequest) returns (BeaconUnlockDeviceResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/unlock"
@@ -101,46 +121,70 @@ service Kingfisher {
             get: "/orgs/{org}/devices/{device_id}/alive"
         };
     }
+
     rpc Deeplink(DeeplinkRequest) returns (DeeplinkResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/deeplink"
             body: "*"
         };
     }
+
     rpc LaunchApp(LaunchAppRequest) returns (LaunchAppResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/launchapp"
             body: "*"
         };
     }
+
     rpc PressKey(PressKeyRequest) returns (PressKeyResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/key"
             body: "*"
         };
     }
+
     rpc Reboot(RebootRequest) returns (RebootResponse) {
         option (google.api.http) = {
             post: "/orgs/{org}/devices/{device_id}/reboot"
             body: "*"
         };
     }
-    rpc Screenshot(ScreenshotRequest) returns (ScreenshotResponse) {
-        // option (google.api.http) = {
-        //     get: "/orgs/{org}/devices/{device_id}/screenshot"
-        // };
-    }
+
+    rpc Screenshot(ScreenshotRequest) returns (ScreenshotResponse) {}
+
     // cookies
     rpc QueryCloudCookies(QueryCloudCookiesRequest) returns (QueryCloudCookiesResponse) {
         option (google.api.http) = {
             get: "/orgs/{org}/devices/{device_id}/cloudcookies"
         };
     }
+
     rpc DeleteCloudCookies(DeleteCloudCookiesRequest) returns (DeleteCloudCookiesResponse) {
         option (google.api.http) = {
             patch: "/orgs/{org}/devices/{device_id}/cloudcookies"
             body: "*"
         };
+    }
+
+    // vrex
+    rpc SimulateVoiceInput(SimulateVoiceInputRequest) returns (SimulateVoiceInputResponse) {
+        option (google.api.http) = {
+            post: "/orgs/{org}/devices/{device_id}/simulate_voice"
+            body: "*"
+        };
+    }
+
+    rpc Redirect(RedirectLinkRequest) returns (RedirectLinkResponse) {
+        option (google.api.http) = {
+          post: "/orgs/{org}/devices/{device_id}/redirect"
+          body: "*"
+      };
+    }
+
+    rpc GetRedirectorType(GetRedirectorRequest) returns (GetRedirectorResponse) {
+        option (google.api.http) = {
+          get: "/orgs/{org}/devices/{device_id}/redirector_type"
+      };
     }
 }
 
@@ -169,9 +213,18 @@ message DeviceMetadata {
     repeated DeviceFeature features = 5;
 }
 
+message OwnerSpec {
+    oneof type {
+        string user = 1;
+        string group = 2;
+    }
+}
+
 message OwnerReference {
     oneof type {
         UserReference user = 1;
+        OrgReference org = 2;
+        GroupReference group = 3;
     }
 }
 
@@ -180,6 +233,15 @@ message DeviceFeature {
     bool enabled = 2;
     bool effective_immediate = 3;
     map<string, string> config = 4;
+}
+
+message OrgReference {
+    string org = 1;
+}
+
+message GroupReference {
+    string org = 1;
+    string name = 2;
 }
 
 message UserReference {
@@ -225,6 +287,14 @@ message RackData {
     string video_camera = 7;
     string video_source_url = 8;
     string device_make = 9;
+    string power_service_url = 10;
+    int32  power_outlet = 11;
+}
+
+message DeviceFlags {
+    bool is_rack = 1;
+    bool has_video = 2;
+    bool has_power = 3;
 }
 
 // meta
@@ -233,6 +303,7 @@ message DeviceData {
     DeviceMetadata metadata = 2;
     Device device = 3;
     RackData rackdata = 4;
+    DeviceFlags device_flags = 5;
 }
 
 message EasyPairOutput {
@@ -275,6 +346,8 @@ message GetDevicesResponse {
 message GetDeviceRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 4;
+
     bool include_rack_data = 3;
 }
 
@@ -304,7 +377,7 @@ message OnboardDeviceRequest {
 }
 
 message OnboardDeviceResponse {
-    DeviceData result = 1;
+    DeviceData result = 1; // only deviceInfo & Metadata should be returned, add own type?
     Error error = 2;
 }
 
@@ -332,6 +405,7 @@ message CheckPairingResponse {
 message RemoveDeviceRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 3;
 }
 
 message RemoveDeviceResponse {
@@ -342,6 +416,7 @@ message UpdateLabelsRequest {
     string org = 1;
     string device_id = 2;
     map<string, string> labels = 3;
+    OwnerSpec owner = 4;
 }
 
 message UpdateLabelsResponse {
@@ -353,6 +428,7 @@ message RemoveLabelsRequest {
     string org = 1;
     string device_id = 2;
     repeated string labels = 3;
+    OwnerSpec owner = 4;
 }
 
 message RemoveLabelsResponse {
@@ -372,6 +448,8 @@ message UpdateRackDataRequest {
     string video_camera = 9;
     string video_source_url = 10;
     string device_make = 11;
+    string power_service_url = 12;
+    int32  power_outlet = 13;
 }
 
 message UpdateRackDataResponse {
@@ -390,6 +468,7 @@ message ShareDeviceResponse {
 message LockDeviceRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 5;
     int32  duration_seconds = 3;
     string reservation_secret = 4;
 }
@@ -403,6 +482,7 @@ message UnlockDeviceRequest {
     string org = 1;
     string device_id = 2;
     string reservation_secret = 3;
+    OwnerSpec owner = 4;
 }
 
 message UnlockDeviceResponse {
@@ -417,8 +497,9 @@ message BeaconRequest {
 message BeaconUnlockDeviceRequest {
     string org = 1;
     string device_id = 2;
-    string authorization =3;
+    string authorization = 3;
     BeaconRequest request = 4;
+    OwnerSpec owner = 5;
 }
 
 message BeaconUnlockDeviceResponse {
@@ -436,6 +517,10 @@ message LaunchAppOutput {
 
 message DeeplinkOutput {
     string deeplink = 1;
+}
+
+message RedirectorType {
+    string redirector_type = 1;
 }
 
 message AliveStatus {
@@ -462,6 +547,60 @@ message CookiesDeleted {
     int32 numCookieJarsCleared = 1;
 }
 
+message ChariotParameters {
+    string account_link_partner_id = 1;
+    string app_cookie_key = 2;
+    string app_name = 3;
+    string cookie_mode = 4;
+    string controller_type = 5;
+    bool disable_screensaver = 6;
+    bool enable_console_logging = 7;
+    bool enable_haxee = 8;
+    bool enable_proxy = 9 [deprecated=true];
+    ExitParamsConfig exit_params = 10;
+    bool forward_player_keys = 11;
+    map<string, string> headers = 12;
+    // string html_browser_type = 13;
+    bool load_money_badger = 14;
+    bool local_storage_enabled = 15;
+    string mime_type = 16;
+    bool mute_player = 17;
+    int32 page_timeout = 18;
+    PlayerDimensions player_config = 19;
+    // not supported starting from chariot-deeplink v 1.2 (11/22/19)
+    SearchConfig search = 20 [deprecated=true];
+    bool show_restricted_content_prompt = 21;
+    bool show_x1_search_results_if_objectionable_content = 22;
+    repeated string supported_browser_types = 23;
+    string template_data = 24;
+    map<string, string> template_data_request_headers = 25;
+    map<string, int32> xscd = 26;
+    string ua_template = 27;
+    string url = 28;
+    bool use_background = 29;
+    UrlComponents url_components = 30;
+    repeated string mock_emails = 31;
+    bool non_composited_web_g_l_enabled = 32;
+    bool use_mock_emails = 33;
+    // temporary (as of 20200129) patch while FE is still using
+    string cookie_accept_policy = 38;
+    string proxy = 39;
+}
+
+// deprecated; search config not supported starting from chariot-deeplink v 1.2 (11/22/19)
+message SearchConfig {
+    string query = 1;
+    string service = 2;
+    string order = 3;
+    int32 max_results = 4;
+    string view_all_url = 5;
+    string select_url = 6;
+    string safe_search = 7;
+    string home_url = 8;
+}
+
+// https://github.comcast.com/ottx/ottx-protobuf/blob/develop/src/main/resources/browser_config.proto
+// changes synced up to Jan 23, f3620d373
 message AppConfig {
     string app_name = 1;
     bool mute_player = 2;
@@ -476,6 +615,7 @@ message AppConfig {
     UrlComponents url_components = 12;
     string controller_type = 13;
     bool use_background = 14;
+    bool enable_proxy = 15 [deprecated=true];
     bool load_money_badger = 16;
     bool enable_haxee = 17;
     bool use_web_filter = 18;
@@ -526,6 +666,14 @@ message CloudCookiesConfig {
     int64 throttling_interval = 4;
 }
 
+// message UrlComponents {
+//     int32 port = 1;
+//     string protocol = 2;
+//     string host = 3;
+//     map<string, string> query = 4;
+//     string path = 5;
+//     string fragment = 6;
+// }
 message UrlComponents {
     string protocol = 1;
     string host = 2;
@@ -583,6 +731,7 @@ message QuickLaunchTemplatePageConfig {
 message CheckAliveRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 3;
 }
 
 message CheckAliveResponse {
@@ -595,9 +744,10 @@ message DeeplinkRequest {
     string device_id = 2;
     string deeplink = 3;
     string reservation_secret = 4;
+    OwnerSpec owner = 5;
 }
 
-message DeeplinkResponse{
+message DeeplinkResponse {
     DeeplinkOutput result = 1;
     Error error = 2;
 }
@@ -605,16 +755,21 @@ message DeeplinkResponse{
 message LaunchAppRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 15;
+    // ChariotParameters is deprecated
+    // starting from chariot-deeplink v 1.2 (11/22/19)
+    ChariotParameters chariot_params = 3 [deprecated=true];
     string reservation_secret = 4;
     bool enable_debug_mode = 5;
     map<string, string> additional_params = 6;
-    map<string,string> additional_params_json = 7;
+    map<string, string> additional_params_json = 7;
     bool disable_voice_out = 8;
     string voice_guidance_mode = 9;
     bool not_stackable = 10;
     bool dry_run = 11;
     AppConfig app_config = 12;
     bool enable_screensaver = 13;
+    string scene_name = 14;
 }
 
 message LaunchAppResponse {
@@ -625,6 +780,7 @@ message LaunchAppResponse {
 message PressKeyRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 5;
     string key = 3;
     string reservation_secret = 4;
 }
@@ -633,10 +789,21 @@ message PressKeyResponse {
     Error error = 1;
 }
 
+enum RebootType {
+    DEFAULT = 0;
+    HARD = 1;
+    SOFT = 2;
+    // like unplugging and plugging the device back in
+    RACK = 3;
+}
+
 message RebootRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 5;
     string reservation_secret = 3;
+
+    RebootType reboot_type = 4;
 }
 
 message RebootResponse {
@@ -646,6 +813,7 @@ message RebootResponse {
 message ScreenshotRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 3;
 }
 
 message ScreenshotResponse {
@@ -656,6 +824,7 @@ message ScreenshotResponse {
 message QueryCloudCookiesRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 3;
 }
 
 message QueryCloudCookiesResponse {
@@ -666,6 +835,7 @@ message QueryCloudCookiesResponse {
 message DeleteCloudCookiesRequest {
     string org = 1;
     string device_id = 2;
+    OwnerSpec owner = 6;
     string app = 3;
     bool fetch_all = 4;
     bool hard_clear = 5;
@@ -673,5 +843,42 @@ message DeleteCloudCookiesRequest {
 
 message DeleteCloudCookiesResponse {
     CookiesDeleted result = 1;
+    Error error = 2;
+}
+
+message SimulateVoiceInputRequest {
+    string org = 1;
+    string device_id = 2;
+    OwnerSpec owner = 6;
+    string reservation_secret = 3;
+
+    string phrase = 4;
+    string language = 5;
+}
+
+message SimulateVoiceInputResponse {
+    Error error = 2;
+}
+
+message RedirectLinkRequest {
+    string org = 1;
+    string device_id = 2;
+    OwnerSpec owner = 5;
+    string list = 4;
+    string link = 3;
+}
+
+message RedirectLinkResponse {
+    Error error = 1;
+}
+
+message GetRedirectorRequest {
+    string org = 1;
+    string device_id = 2;
+    OwnerSpec owner = 3;
+}
+
+message  GetRedirectorResponse {
+    RedirectorType result = 1;
     Error error = 2;
 }

@@ -13,5 +13,23 @@ public class Constants {
      * The constant KINGFISHER_SERVICE.
      */
     public static final String KINGFISHER_SERVICE = "kingfisher.prod.ibis.comcast.com";
+
+    /**
+     * The enum Redirector type.
+     */
+    public enum RedirectorType {
+        /**
+         * Bigsur redirector type.
+         */
+        bigsur,
+        /**
+         * Toledo redirector type.
+         */
+        toledo,
+        /**
+         * None redirector type.
+         */
+        none
+    }
 }
 

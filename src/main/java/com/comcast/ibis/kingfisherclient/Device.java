@@ -1,6 +1,7 @@
 package com.comcast.ibis.kingfisherclient;
 
 import com.comcast.ibis.kingfisher.*;
+import com.comcast.ibis.kingfisherclient.common.Utils;
 
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,8 @@ public class Device {
 
     private Map<String, String> secretManager;
 
+    private OwnerSpec ownerSpec;
+
     /**
      * Instantiates a new Device.
      *
@@ -51,6 +54,7 @@ public class Device {
         this.deviceRef = deviceRef;
         this.stub = stub;
         this.secretManager = secretManager;
+        this.ownerSpec = Utils.getOwnerSpec(this.deviceMetadata);
     }
 
     /**
@@ -61,11 +65,13 @@ public class Device {
     String lock() {
         LockDeviceResponse res;
         try {
-            LockDeviceRequest req = LockDeviceRequest.newBuilder()
+            LockDeviceRequest.Builder req = LockDeviceRequest.newBuilder()
                     .setDeviceId(deviceRef.getDevice())
-                    .setOrg(deviceRef.getOrg())
-                    .build();
-            res = this.stub.lockDevice(req);
+                    .setOrg(deviceRef.getOrg());
+            if(ownerSpec != null) {
+                req.setOwner(ownerSpec);
+            }
+            res = this.stub.lockDevice(req.build());
         } catch (Exception e) {
             throw new Error("unable to lock device");
         }
@@ -86,12 +92,14 @@ public class Device {
             throw new IllegalArgumentException("reservation secret is not present");
         }
         try {
-            LockDeviceRequest req = LockDeviceRequest.newBuilder()
+            LockDeviceRequest.Builder req = LockDeviceRequest.newBuilder()
                     .setDeviceId(deviceRef.getDevice())
                     .setOrg(deviceRef.getOrg())
-                    .setReservationSecret(secret)
-                    .build();
-            res = this.stub.lockDevice(req);
+                    .setReservationSecret(secret);
+            if(ownerSpec != null) {
+                req.setOwner(ownerSpec);
+            }
+            res = this.stub.lockDevice(req.build());
             return res.getResult().getReservation().getReservationSecret();
         } catch (Exception e) {
             throw new Error("unable to lock device");
@@ -109,12 +117,14 @@ public class Device {
             throw new IllegalArgumentException("reservation secret must be provided");
         }
 
-        UnlockDeviceRequest req = UnlockDeviceRequest.newBuilder()
+        UnlockDeviceRequest.Builder req = UnlockDeviceRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setReservationSecret(secret)
-                .setOrg(deviceRef.getOrg())
-                .build();
-        UnlockDeviceResponse res = this.stub.unlockDevice(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        UnlockDeviceResponse res = this.stub.unlockDevice(req.build());
     }
 
     /**
@@ -123,13 +133,15 @@ public class Device {
      * @param appConfig the app config
      */
     public void launchApp(AppConfig appConfig) {
-        LaunchAppRequest req = LaunchAppRequest.newBuilder()
+        LaunchAppRequest.Builder req = LaunchAppRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setAppConfig(appConfig)
                 .setReservationSecret(secretManager.get(deviceRef.getDevice()))
-                .setOrg(deviceRef.getOrg())
-                .build();
-        LaunchAppResponse res = this.stub.launchApp(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        LaunchAppResponse res = this.stub.launchApp(req.build());
     }
 
     /**
@@ -140,7 +152,7 @@ public class Device {
      * @return the string
      */
     public String launchApp(AppConfig appConfig,DeeplinkParams deepLinkParams) {
-        LaunchAppRequest req = LaunchAppRequest.newBuilder()
+        LaunchAppRequest.Builder req = LaunchAppRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setAppConfig(appConfig)
                 .setReservationSecret(secretManager.get(deviceRef.getDevice()))
@@ -150,9 +162,11 @@ public class Device {
                 .setDryRun(deepLinkParams.isDryRun())
                 .setVoiceGuidanceMode(deepLinkParams.getVoiceGuidanceMode())
                 .putAllAdditionalParams(deepLinkParams.getAdditionalParams())
-                .setEnableScreensaver(deepLinkParams.isEnableScreensaver())
-                .build();
-        LaunchAppResponse res = this.stub.launchApp(req);
+                .setEnableScreensaver(deepLinkParams.isEnableScreensaver());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        LaunchAppResponse res = this.stub.launchApp(req.build());
         return res.getResult().getDeeplink();
     }
 
@@ -168,13 +182,15 @@ public class Device {
             throw new IllegalArgumentException("deeplink  must be provided");
         }
 
-        DeeplinkRequest req = DeeplinkRequest.newBuilder()
+        DeeplinkRequest.Builder req = DeeplinkRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setReservationSecret(secretManager.get(deviceRef.getDevice()))
                 .setDeeplink(deeplink)
-                .setOrg(deviceRef.getOrg())
-                .build();
-        DeeplinkResponse res = this.stub.deeplink(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        DeeplinkResponse res = this.stub.deeplink(req.build());
          return res.getResult().getDeeplink();
     }
 
@@ -189,13 +205,15 @@ public class Device {
             throw new IllegalArgumentException("key  must be provided");
         }
 
-        PressKeyRequest req = PressKeyRequest.newBuilder()
+        PressKeyRequest.Builder req = PressKeyRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setReservationSecret(secretManager.get(deviceRef.getDevice()))
                 .setKey(key)
-                .setOrg(deviceRef.getOrg())
-                .build();
-        PressKeyResponse res = this.stub.pressKey(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        PressKeyResponse res = this.stub.pressKey(req.build());
     }
 
 
@@ -206,11 +224,13 @@ public class Device {
      */
     public ByteString screenshot() {
 
-        ScreenshotRequest req = ScreenshotRequest.newBuilder()
+        ScreenshotRequest.Builder req = ScreenshotRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
-                .setOrg(deviceRef.getOrg())
-                .build();
-        ScreenshotResponse res = this.stub.screenshot(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        ScreenshotResponse res = this.stub.screenshot(req.build());
         return res.getResult().getImage();
 
     }
@@ -221,27 +241,85 @@ public class Device {
      * @return the check alive response
      */
     public CheckAliveResponse checkAlive() {
-
-        CheckAliveRequest req = CheckAliveRequest.newBuilder().build().newBuilder()
+        CheckAliveRequest.Builder req = CheckAliveRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
-                .setOrg(deviceRef.getOrg())
-                .build();
-        return this.stub.checkAlive(req);
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+             req.setOwner(ownerSpec);
+        }
+        return this.stub.checkAlive(req.build());
     }
 
     /**
      * Reboot reboot response.
      *
+     * @param rebootType the reboot type
      * @return the reboot response
      */
-    public RebootResponse reboot() {
+    public RebootResponse reboot(RebootType rebootType) {
 
-        RebootRequest req = RebootRequest.newBuilder()
+        RebootRequest.Builder req = RebootRequest.newBuilder()
                 .setDeviceId(deviceRef.getDevice())
                 .setReservationSecret(secretManager.get(deviceRef.getDevice()))
-                .setOrg(deviceRef.getOrg())
-                .build();
-        return this.stub.reboot(req);
+                .setRebootType(rebootType)
+                .setOrg(deviceRef.getOrg());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        return this.stub.reboot(req.build());
     }
 
+    /**
+     * Gets redirector type.
+     *
+     * @return the redirector type
+     */
+    public GetRedirectorResponse getRedirectorType() {
+        GetRedirectorRequest.Builder req = GetRedirectorRequest.newBuilder()
+                .setOrg(deviceRef.getOrg())
+                .setDeviceId(deviceRef.getDevice());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        return this.stub.getRedirectorType(req.build());
+    }
+
+    /**
+     * Redirect redirect link response.
+     *
+     * @param link the link
+     * @param list the list
+     * @return the redirect link response
+     */
+    public RedirectLinkResponse redirect(String link, RedirectorType list) {
+        RedirectLinkRequest.Builder req = RedirectLinkRequest.newBuilder()
+                .setOrg(deviceRef.getOrg())
+                .setDeviceId(deviceRef.getDevice())
+                .setLink(link)
+                .setList(list.toString());
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        return this.stub.redirect(req.build());
+    }
+
+    /**
+     * Simulate voice input simulate voice input response.
+     *
+     * @param phrase   the phrase
+     * @param language the language
+     * @return the simulate voice input response
+     */
+    public SimulateVoiceInputResponse simulateVoiceInput(String phrase, String language) {
+        SimulateVoiceInputRequest.Builder req = SimulateVoiceInputRequest.newBuilder()
+                .setOrg(deviceRef.getOrg())
+                .setDeviceId(deviceRef.getDevice())
+                .setPhrase(phrase)
+                .setLanguage(language)
+                .setReservationSecret(secretManager.get(deviceRef.getDevice()));
+        if(ownerSpec != null) {
+            req.setOwner(ownerSpec);
+        }
+        return this.stub.simulateVoiceInput(req.build());
+    }
 }
